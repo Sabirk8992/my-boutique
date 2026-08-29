@@ -1,0 +1,21 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: online-boutique
+  region: us-west-2
+
+vpc:
+  nat:
+    gateway: Single   # one NAT gateway instead of one-per-AZ, keeps cost down
+
+managedNodeGroups:
+  - name: ng-general
+    instanceType: m5.large
+    desiredCapacity: 3
+    minSize: 3
+    maxSize: 3
+    volumeSize: 20
+    tags:
+      project: online-boutique
+      environment: learning
