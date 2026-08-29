@@ -1,13 +1,17 @@
 # EKS cluster, its managed node group, and the node group's launch
-# template. Consolidated from generated.tf and generated_final.tf —
-# values exactly as verified and applied.
+# template. Cross-references converted to point at the actual
+# Terraform-managed resources instead of hardcoded IDs/ARNs.
+#
+# Note: node group sits in the PUBLIC subnets (2a/2b/2c), not private
+# — that's what eksctl actually created here, preserved as-is. Worth
+# a look under the hardening pass later, not touched in this edit.
 
 resource "aws_eks_cluster" "online_boutique" {
   bootstrap_self_managed_addons = false
   enabled_cluster_log_types     = []
   force_update_version          = null
   name                          = "online-boutique"
-  role_arn                      = "arn:aws:iam::498523528523:role/eksctl-online-boutique-cluster-ServiceRole-sAfu2yja4h3E"
+  role_arn                      = aws_iam_role.cluster_service_role.arn
   version                       = "1.32"
   tags = {
     Name                                          = "eksctl-online-boutique-cluster/ControlPlane"
@@ -38,14 +42,14 @@ resource "aws_eks_cluster" "online_boutique" {
     endpoint_private_access = false
     endpoint_public_access  = true
     public_access_cidrs     = ["0.0.0.0/0"]
-    security_group_ids      = ["sg-059ae7a695315e111"]
+    security_group_ids      = [aws_security_group.control_plane.id]
     subnet_ids = [
-      "subnet-01d6256069227826f",
-      "subnet-0a625a7dcb93e28f8",
-      "subnet-0b271d5cadaa2da49",
-      "subnet-0c895124936cdbd29",
-      "subnet-0e72a38803883c397",
-      "subnet-0f1f53e5385cf9b61",
+      aws_subnet.public_us_west_2a.id,
+      aws_subnet.private_us_west_2c.id,
+      aws_subnet.public_us_west_2b.id,
+      aws_subnet.public_us_west_2c.id,
+      aws_subnet.private_us_west_2b.id,
+      aws_subnet.private_us_west_2a.id,
     ]
   }
 }
@@ -59,12 +63,12 @@ resource "aws_eks_node_group" "ng_general" {
   instance_types        = ["m5.large"]
   node_group_name        = "ng-general"
   node_group_name_prefix = null
-  node_role_arn          = "arn:aws:iam::498523528523:role/eksctl-online-boutique-nodegroup-n-NodeInstanceRole-Cc0oVxVbcoef"
+  node_role_arn          = aws_iam_role.node_instance_role.arn
   release_version        = "1.32.13-20260818"
   subnet_ids = [
-    "subnet-01d6256069227826f",
-    "subnet-0b271d5cadaa2da49",
-    "subnet-0c895124936cdbd29",
+    aws_subnet.public_us_west_2a.id,
+    aws_subnet.public_us_west_2b.id,
+    aws_subnet.public_us_west_2c.id,
   ]
   version = "1.32"
   labels = {
@@ -82,7 +86,7 @@ resource "aws_eks_node_group" "ng_general" {
   }
 
   launch_template {
-    id      = "lt-043e2680cee096046"
+    id      = aws_launch_template.ng_general.id
     version = "1"
   }
 
@@ -112,7 +116,7 @@ resource "aws_launch_template" "ng_general" {
   ram_disk_id                           = null
   update_default_version                = null
   user_data                             = null
-  vpc_security_group_ids                = ["sg-023c0eed332e97696"]
+  vpc_security_group_ids                = [aws_eks_cluster.online_boutique.vpc_config[0].cluster_security_group_id]
   tags                                  = {}
 
   block_device_mappings {
