@@ -1,7 +1,9 @@
-# __generated__ by Terraform
-# Please review these resources and move them into your main configuration files.
+# Security groups and the ingress rules between them.
+# Consolidated from generated_security_groups.tf — values exactly
+# as verified and applied. Egress kept inline (no separate resource
+# exists for it); ingress managed only via the separate
+# aws_vpc_security_group_ingress_rule resources below.
 
-# __generated__ by Terraform from "sgr-03c999398da60c94a"
 resource "aws_vpc_security_group_ingress_rule" "inter_nodegroup" {
   cidr_ipv4                    = null
   cidr_ipv6                    = null
@@ -15,7 +17,6 @@ resource "aws_vpc_security_group_ingress_rule" "inter_nodegroup" {
   to_port                      = null
 }
 
-# __generated__ by Terraform from "sgr-071a973fca43f20cc"
 resource "aws_vpc_security_group_ingress_rule" "node_to_default_cluster" {
   cidr_ipv4                    = null
   cidr_ipv6                    = null
@@ -29,7 +30,6 @@ resource "aws_vpc_security_group_ingress_rule" "node_to_default_cluster" {
   to_port                      = null
 }
 
-# __generated__ by Terraform from "sg-0084bf19a79ecbb00"
 resource "aws_security_group" "cluster_shared_node" {
   description = "Communication between all nodes in the cluster"
   egress = [{
@@ -53,17 +53,9 @@ resource "aws_security_group" "cluster_shared_node" {
     "alpha.eksctl.io/eksctl-version"              = "0.207.0"
     "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = "online-boutique"
   }
-  tags_all = {
-    Name                                          = "eksctl-online-boutique-cluster/ClusterSharedNodeSecurityGroup"
-    "alpha.eksctl.io/cluster-name"                = "online-boutique"
-    "alpha.eksctl.io/cluster-oidc-enabled"        = "false"
-    "alpha.eksctl.io/eksctl-version"              = "0.207.0"
-    "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = "online-boutique"
-  }
   vpc_id = "vpc-0bd302b6aec808496"
 }
 
-# __generated__ by Terraform from "sgr-01fa7f6d18127b829"
 resource "aws_vpc_security_group_ingress_rule" "default_cluster_to_node" {
   cidr_ipv4                    = null
   cidr_ipv6                    = null
@@ -77,7 +69,6 @@ resource "aws_vpc_security_group_ingress_rule" "default_cluster_to_node" {
   to_port                      = null
 }
 
-# __generated__ by Terraform from "sg-059ae7a695315e111"
 resource "aws_security_group" "control_plane" {
   description = "Communication between the control plane and worker nodegroups"
   egress = [{
@@ -95,13 +86,6 @@ resource "aws_security_group" "control_plane" {
   name_prefix            = null
   revoke_rules_on_delete = null
   tags = {
-    Name                                          = "eksctl-online-boutique-cluster/ControlPlaneSecurityGroup"
-    "alpha.eksctl.io/cluster-name"                = "online-boutique"
-    "alpha.eksctl.io/cluster-oidc-enabled"        = "false"
-    "alpha.eksctl.io/eksctl-version"              = "0.207.0"
-    "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = "online-boutique"
-  }
-  tags_all = {
     Name                                          = "eksctl-online-boutique-cluster/ControlPlaneSecurityGroup"
     "alpha.eksctl.io/cluster-name"                = "online-boutique"
     "alpha.eksctl.io/cluster-oidc-enabled"        = "false"
