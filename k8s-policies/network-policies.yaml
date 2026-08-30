@@ -1,0 +1,213 @@
+# Default-deny ingress for every pod in the namespace, then explicit
+# allow rules per real edge in the call graph. loadgenerator has no
+# rule because nothing calls into it — it only calls out to frontend.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: online-boutique
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# frontend is the intentional public entry point, behind the LoadBalancer.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-cartservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: cartservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: checkoutservice
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-checkoutservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: checkoutservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-productcatalogservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: productcatalogservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: checkoutservice
+        - podSelector:
+            matchLabels:
+              app: recommendationservice
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-currencyservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: currencyservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: checkoutservice
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-shippingservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: shippingservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: checkoutservice
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-paymentservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: paymentservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: checkoutservice
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-emailservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: emailservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: checkoutservice
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-recommendationservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: recommendationservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-adservice-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: adservice
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-cart-ingress
+  namespace: online-boutique
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-cart
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: cartservice
