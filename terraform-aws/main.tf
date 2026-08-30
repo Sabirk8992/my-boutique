@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.11.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -7,8 +7,13 @@ terraform {
     }
   }
 
-  # Local state for now — intentional, this is a learning step.
-  # Remote state (S3 + DynamoDB lock) is its own later exercise.
+  backend "s3" {
+    bucket       = "online-boutique-tfstate-498523528523"
+    key          = "online-boutique/terraform.tfstate"
+    region       = "us-west-2"
+    encrypt      = true
+    use_lockfile = true
+  }
 }
 
 provider "aws" {
