@@ -12,7 +12,7 @@ resource "aws_eks_cluster" "online_boutique" {
   force_update_version          = null
   name                          = "online-boutique"
   role_arn                      = aws_iam_role.cluster_service_role.arn
-  version                       = "1.32"
+  version                       = "1.35"
   tags = {
     Name                                          = "eksctl-online-boutique-cluster/ControlPlane"
     "alpha.eksctl.io/cluster-name"                = "online-boutique"
@@ -54,41 +54,25 @@ resource "aws_eks_cluster" "online_boutique" {
   }
 }
 
-resource "aws_eks_node_group" "ng_general" {
-  ami_type              = "AL2023_x86_64_STANDARD"
-  capacity_type         = "ON_DEMAND"
-  cluster_name          = "online-boutique"
-  disk_size             = 0
-  force_update_version  = null
-  instance_types        = ["m5.large"]
-  node_group_name        = "ng-general"
-  node_group_name_prefix = null
-  node_role_arn          = aws_iam_role.node_instance_role.arn
-  release_version        = "1.32.13-20260818"
-  subnet_ids = [
-    aws_subnet.public_us_west_2a.id,
-    aws_subnet.public_us_west_2b.id,
-    aws_subnet.public_us_west_2c.id,
-  ]
-  version = "1.32"
-  labels = {
-    "alpha.eksctl.io/cluster-name"   = "online-boutique"
-    "alpha.eksctl.io/nodegroup-name" = "ng-general"
-  }
-  tags = {
-    "alpha.eksctl.io/cluster-name"                = "online-boutique"
-    "alpha.eksctl.io/eksctl-version"              = "0.207.0"
-    "alpha.eksctl.io/nodegroup-name"              = "ng-general"
-    "alpha.eksctl.io/nodegroup-type"              = "managed"
-    "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = "online-boutique"
-    environment                                   = "learning"
-    project                                       = "online-boutique"
-  }
 
-  launch_template {
-    id      = aws_launch_template.ng_general.id
-    version = "1"
-  }
+
+
+######## new node instance type###########
+
+
+resource "aws_eks_node_group" "ng_private_t3" {
+  cluster_name    = aws_eks_cluster.online_boutique.name
+  version         = "1.35"
+  node_group_name = "ng-private-t3"
+  node_role_arn   = aws_iam_role.node_instance_role.arn
+  subnet_ids = [
+    aws_subnet.private_us_west_2a.id,
+    aws_subnet.private_us_west_2b.id,
+    aws_subnet.private_us_west_2c.id,
+  ]
+  ami_type       = "AL2023_x86_64_STANDARD"
+  capacity_type  = "ON_DEMAND"
+  instance_types = ["t3.medium"]
 
   scaling_config {
     desired_size = 3
@@ -99,78 +83,9 @@ resource "aws_eks_node_group" "ng_general" {
   update_config {
     max_unavailable = 1
   }
-}
 
-resource "aws_launch_template" "ng_general" {
-  name                                  = "eksctl-online-boutique-nodegroup-ng-general"
-  description                           = null
-  disable_api_stop                      = false
-  disable_api_termination               = false
-  ebs_optimized                         = null
-  image_id                              = null
-  instance_initiated_shutdown_behavior  = null
-  instance_type                         = null
-  kernel_id                             = null
-  key_name                              = null
-  name_prefix                           = null
-  ram_disk_id                           = null
-  update_default_version                = null
-  user_data                             = null
-  vpc_security_group_ids                = [aws_eks_cluster.online_boutique.vpc_config[0].cluster_security_group_id]
-  tags                                  = {}
-
-  block_device_mappings {
-    device_name  = "/dev/xvda"
-    no_device    = null
-    virtual_name = null
-    ebs {
-      delete_on_termination = null
-      encrypted              = null
-      iops                   = 3000
-      kms_key_id             = null
-      snapshot_id            = null
-      throughput             = 125
-      volume_size            = 20
-      volume_type            = "gp3"
-    }
-  }
-
-  metadata_options {
-    http_endpoint               = null
-    http_protocol_ipv6          = null
-    http_put_response_hop_limit = 2
-    http_tokens                 = "required"
-    instance_metadata_tags      = null
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name                             = "online-boutique-ng-general-Node"
-      "alpha.eksctl.io/nodegroup-name" = "ng-general"
-      "alpha.eksctl.io/nodegroup-type" = "managed"
-      environment                      = "learning"
-      project                          = "online-boutique"
-    }
-  }
-  tag_specifications {
-    resource_type = "volume"
-    tags = {
-      Name                             = "online-boutique-ng-general-Node"
-      "alpha.eksctl.io/nodegroup-name" = "ng-general"
-      "alpha.eksctl.io/nodegroup-type" = "managed"
-      environment                      = "learning"
-      project                          = "online-boutique"
-    }
-  }
-  tag_specifications {
-    resource_type = "network-interface"
-    tags = {
-      Name                             = "online-boutique-ng-general-Node"
-      "alpha.eksctl.io/nodegroup-name" = "ng-general"
-      "alpha.eksctl.io/nodegroup-type" = "managed"
-      environment                      = "learning"
-      project                          = "online-boutique"
-    }
+  tags = {
+    project     = "online-boutique"
+    environment = "learning"
   }
 }
