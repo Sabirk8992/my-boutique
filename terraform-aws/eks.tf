@@ -89,3 +89,52 @@ resource "aws_eks_node_group" "ng_private_t3" {
     environment = "learning"
   }
 }
+
+data "tls_certificate" "eks_oidc" {
+  url = aws_eks_cluster.online_boutique.identity[0].oidc[0].issuer
+}
+
+resource "aws_iam_openid_connect_provider" "eks_oidc" {
+  url             = aws_eks_cluster.online_boutique.identity[0].oidc[0].issuer
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks_oidc.certificates[0].sha1_fingerprint]
+}
+resource "aws_secretsmanager_secret" "cartservice_demo" {
+  name = "online-boutique/cartservice/demo-credential"
+}
+
+resource "aws_secretsmanager_secret_version" "cartservice_demo" {
+  secret_id     = aws_secretsmanager_secret.cartservice_demo.id
+  secret_string = jsonencode({ demo_key = "demo-value-proving-the-pipeline-works" })
+}
+
+resource "aws_iam_role" "cartservice_irsa" {
+  name = "online-boutique-cartservice-irsa"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.eks_oidc.arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${replace(aws_iam_openid_connect_provider.eks_oidc.url, "https://", "")}:sub" = "system:serviceaccount:online-boutique:cartservice"
+          "${replace(aws_iam_openid_connect_provider.eks_oidc.url, "https://", "")}:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "cartservice_secrets_read" {
+  name = "read-cartservice-demo-secret"
+  role = aws_iam_role.cartservice_irsa.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "secretsmanager:GetSecretValue"
+      Resource = aws_secretsmanager_secret.cartservice_demo.arn
+    }]
+  })
+}
