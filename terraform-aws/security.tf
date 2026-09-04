@@ -94,3 +94,30 @@ resource "aws_security_group" "control_plane" {
   }
   vpc_id = "vpc-0bd302b6aec808496"
 }
+
+
+resource "aws_security_group" "vpc_endpoints" {
+  name        = "online-boutique-vpc-endpoints"
+  description = "Allow EKS worker nodes to access AWS interface VPC endpoints"
+  vpc_id      = "vpc-0bd302b6aec808496"
+
+  ingress {
+    description     = "HTTPS from EKS worker nodes"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.cluster_shared_node.id]
+  }
+
+  egress {
+    description = "Allow endpoint responses"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "online-boutique-vpc-endpoints"
+  }
+}
